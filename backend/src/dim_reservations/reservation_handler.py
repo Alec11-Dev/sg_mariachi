@@ -655,8 +655,8 @@ class ReservationService:
             month_from_request = request_data.get('month')
 
             # Validar el filter_type
-            if filter_type not in ['day', 'week', 'month']:
-                return 400, "Tipo de filtro no válido. Debe ser 'day', 'week' o 'month'.", []
+            if filter_type not in ['day', 'week', 'month', 'year']:
+                return 400, "Tipo de filtro no válido. Debe ser 'day', 'week', 'month' o 'year'.", []
 
             # Validar que el año sea un entero si viene en el request
             if year_from_request is not None:

@@ -201,8 +201,15 @@ def stats_calendar() -> tuple[Any]:
             return send_error("El parámetro 'year' es obligatorio", 400)
         if filter_type == 'month' and not month:
             return send_error("El parámetro 'month' es obligatorio para el filtro tipo 'month'", 400)
+        
+        # Construir el diccionario que espera el handler
+        request_data = {
+            'filter_type': filter_type,
+            'year': year,
+            'month': month
+        }
         # Llamar a la función de lógica de negocio para obtener las estadísticas
-        status, message, data_stats = reservation_options.get_reservation_stats(filter_type, year, month)
+        status, message, data_stats = reservation_options.get_reservation_stats(request_data)
         if status != 200:
             print(message)
             return send_error(message, status)
