@@ -1,6 +1,8 @@
 from src.dim_dates.dim_date import DIM_DATE
 from src.fact_revenues.fact_revenues_service import FactRevenuesService
 from src.fact_revenues.fact_revenues_model import FactRevenues
+from src.dim_reservations.repositorio.get_reservation_by_id import get_reservation_by_id
+from src.fact_revenues.repositorio.get_total_paid import get_total_paid
 from src.utils.conexion import Conexion
 from src.utils.id_generator import create_id_fact_reservation
 from datetime import datetime
@@ -44,9 +46,23 @@ class FactRevenuesHandler:
             # Se permite cualquier monto positivo para facilitar abonos y liquidaciones pequeñas
             if revenue.FACT_PaymentAmount <= 0:
                 return 400, "El monto del pago debe ser mayor a 0.", []
-             
             
+            # Validar que el pago no exceda el monto restante de la reserva
+            reservation = get_reservation_by_id(_revenue['DIM_ReservationId'], conexion)
+            if not reservation:
+                return 404, f"No se encontró la reserva {_revenue['DIM_ReservationId']}", []
 
+            total_amount = float(reservation['DIM_TotalAmount'])
+            total_paid = get_total_paid(_revenue['DIM_ReservationId'], conexion)
+            remaining_balance = total_amount - total_paid
+
+            # Si el pgo del evento se completo, no se permiten más pagos y se mostrara un mensaje indicando que la reserva ya está completamente pagada
+            if total_paid == total_amount:
+                return 400, "La reserva ya está completamente pagada. No se permiten más pagos.", []
+
+            if revenue.FACT_PaymentAmount > remaining_balance:
+                return 400, f"El monto del pago excede el saldo pendiente. Restante: {remaining_balance}", []
+            
             #4. Generar el ID de la factura ya que no se proporciona
             # Agregamos datetime.now() para evitar IDs duplicados si se hacen 2 pagos el mismo día
             fact_id = create_id_fact_reservation([_revenue['DIM_DateId'], _revenue['DIM_ReservationId'], str(datetime.now())])

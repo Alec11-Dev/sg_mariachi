@@ -1,5 +1,6 @@
 from src.utils.conexion import Conexion
 from datetime import datetime
+import pytz
 
 def update_past_reservations_to_complete(connection: Conexion) -> int:
     """
@@ -13,7 +14,9 @@ def update_past_reservations_to_complete(connection: Conexion) -> int:
     COMPLETED_STATUS_ID = 'd9664265-818c-52dc' # ID de Completada
 
     # Obtenemos la hora actual en formato ISO compatible con la BD
-    current_time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+    # Usamos la zona horaria de México para asegurar consistencia
+    mexico_tz = pytz.timezone("America/Mexico_City")
+    current_time = datetime.now(mexico_tz).strftime('%Y-%m-%dT%H:%M:%S')
 
     query = """
     UPDATE dim_reservation
