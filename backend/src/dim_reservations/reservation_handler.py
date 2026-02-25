@@ -5,7 +5,8 @@ from src.dim_reservations.reservation_model import Reservation
 from src.dim_people.people_services import PeopleService
 from src.dim_people.people_handler import PeopleHandler
 from src.dim_reservations.reservation_service import ReservaService
-from datetime import datetime
+from datetime import datetime, timedelta
+import pytz
 from src.dim_people.people_handler import PeopleHandler
 from src.dim_status.status import get_status_pending
 
@@ -334,6 +335,40 @@ class ReservationService:
             if not existing_reservation_data:
                 return 404, f"No se encontró una reserva con el ID {reservation_id}", []
 
+            # --- VALIDACIONES DE NEGOCIO ---
+
+            # Validación 1: El estatus de la reserva debe ser 'pendiente'
+            current_status_id = existing_reservation_data['DIM_StatusId']
+            allowed_statuses = ['6d0fa47f-1933-5928']  # ID de pendiente
+            if current_status_id not in allowed_statuses:
+                return 400, "La reservación no puede ser actualizada porque no está en estado 'Pendiente'.", []
+
+            # Validación 2: Las fechas deben ser lógicas y futuras
+            new_start_str = _reservation['DIM_StartDate']
+            new_end_str = _reservation['DIM_EndDate']
+            new_start = datetime.fromisoformat(new_start_str)
+            new_end = datetime.fromisoformat(new_end_str)
+
+            if new_start >= new_end:
+                return 400, "La hora de inicio debe ser anterior a la hora de fin.", []
+
+            # Validación 3: La nueva fecha no puede ser en el pasado
+            mexico_tz = pytz.timezone("America/Mexico_City")
+            date_now = datetime.now(mexico_tz)
+            
+            # Asumimos que la fecha del frontend es naive y la localizamos para una comparación correcta
+            new_start_aware = mexico_tz.localize(new_start) if new_start.tzinfo is None else new_start
+
+            if new_start_aware < date_now:
+                 return 400, "No se puede actualizar la reserva a una fecha que ya ha pasado.", []
+
+            # Validación 4: No se puede actualizar si faltan menos de X días para el evento
+            time_until_event = new_start_aware - date_now
+            if time_until_event < timedelta(days=4):
+                return 400, "La reservación no puede ser actualizada, ya que faltan menos de 4 días para el evento.", []
+
+            # --- FIN DE VALIDACIONES ---
+
             # 3. Actualizar el teléfono secundario de la persona
             people_id = existing_reservation_data['DIM_PeopleId']
             new_second_phone = _reservation['DIM_SecondPhoneNumber']
@@ -343,11 +378,8 @@ class ReservationService:
                 return 500, "Error al actualizar el número de teléfono secundario.", []
 
             # 4. Construir el objeto Reservation con datos actualizados y existentes
-            dim_date_service = DIM_DATE(conexion) # Para obtener la fecha de modificación
-            
-            # Extraer la fecha del evento para usarla como DIM_DateId
-            event_date = datetime.fromisoformat(_reservation['DIM_StartDate'])
-            event_date_id = dim_date_service.get_id_by_object_date(event_date.year, event_date.month, event_date.day)
+            dim_date_service = DIM_DATE(conexion)
+            event_date_id = dim_date_service.get_id_by_object_date(new_start.year, new_start.month, new_start.day)
 
             # Nuevamente, validar que la fecha del evento exista en DIM_Date
             if event_date_id is None:
@@ -355,29 +387,23 @@ class ReservationService:
                 return 400, "La fecha del evento no se encuentra en el sistema de fechas.", []
 
             new_reservation = Reservation(
-                DIM_ReservationId=reservation_id, # ID Original
-                DIM_PeopleId=people_id, # Obtenido de la reserva existente
-                DIM_StatusId=existing_reservation_data['DIM_StatusId'], # Obtenido de la reserva existente
-                
-                # Linea original del DIM_DateId
-                #DIM_DateId= dim_date_service.dateId, # Fecha de la modificación
-
-                # Nueva linea para el DIM_DateId basado en la fecha del evento
-                DIM_DateId=event_date_id, # Usamos el ID de la fecha del evento
-
-                DIM_ServiceOwnersId=existing_reservation_data['DIM_ServiceOwnersId'], # Obtenido de la reserva existente
-                DIM_EventAddress=existing_reservation_data['DIM_EventAddress'], # Obtenido de la reserva existente
-                DIM_StartDate=_reservation['DIM_StartDate'], # Dato nuevo del frontend
-                DIM_EndDate=_reservation['DIM_EndDate'], # Dato nuevo del frontend
-                DIM_NHours=_reservation['DIM_NHours'], # Dato nuevo del frontend
-                DIM_TotalAmount=_reservation['DIM_TotalAmount'], # Dato nuevo del frontend
-                DIM_Notes=_reservation['DIM_Notes'] # Dato nuevo del frontend
+                DIM_ReservationId=reservation_id,
+                DIM_PeopleId=people_id,
+                DIM_StatusId=existing_reservation_data['DIM_StatusId'],
+                DIM_DateId=event_date_id,
+                DIM_ServiceOwnersId=existing_reservation_data['DIM_ServiceOwnersId'],
+                DIM_EventAddress=existing_reservation_data['DIM_EventAddress'],
+                DIM_StartDate=_reservation['DIM_StartDate'],
+                DIM_EndDate=_reservation['DIM_EndDate'],
+                DIM_NHours=_reservation['DIM_NHours'],
+                DIM_TotalAmount=_reservation['DIM_TotalAmount'],
+                DIM_Notes=_reservation['DIM_Notes']
             )
 
             # 5. Validar y actualizar en la capa de servicio
             success, message = reserva_service.update_and_validate_reservation(new_reservation)
             if not success:
-                return 400, message , []# Error de negocio (ej. solapamiento)
+                return 400, message , []
             
             conexion.save_changes()
             
@@ -385,7 +411,7 @@ class ReservationService:
             return 200, "Reserva actualizada exitosamente", [reservacion_update]
 
         except ValueError as ve:
-            return 400, str(ve), {}
+            return 400, str(ve), []
         except Exception as e:
             print(f"❌ Error al actualizar la reserva: {e}")
             conexion.conn.rollback()
@@ -412,17 +438,26 @@ class ReservationService:
             if not reservation_id:
                 return 400, "Falta el ID de la reservación (DIM_ReservationId).", []
 
+            # --- CORRECCIÓN: Actualizar estatus automáticos antes de validar ---
+            # Esto asegura que si el evento ya pasó, su estatus pase a 'Completada'
+            # antes de verificar si se puede archivar.
+            update_past_reservations_to_complete(conexion)
+
             # 2. Obtener la reservación para verificar su estatus
             existing_reservation = reserva_service.get_reservation_by_id(reservation_id)
             if not existing_reservation:
                 return 404, f"No se encontró una reserva con el ID {reservation_id}", []
 
-            # 3. Verificar si el estatus es 'completado' o 'cancelado'
+            # 3. Verificar el estatus actual
             current_status_id = existing_reservation['DIM_StatusId']
+            
+            # Si ya está archivada, retornamos éxito inmediatamente para evitar doble procesamiento/alerta
+            if current_status_id == 'cw42055f-3ecb-9099': # ID CORREGIDO (Coincide con repo)
+                return 200, "La reservación ya se encuentra archivada.", [existing_reservation]
+
             allowed_statuses = [
                 'd9664265-818c-52dc',  # ID de completada
                 'c842035f-aecb-5099',  # ID de cancelada
-                '624a7243-52a7-5e88'   # ID de archivada (para evitar errores si se intenta archivar de nuevo)
             ]
 
             if current_status_id not in allowed_statuses:
@@ -565,6 +600,11 @@ class ReservationService:
             
             #3. Verificar si el estatus es cancelado, archivado o completado'
             current_status_id = existing_reservation['DIM_StatusId']
+            
+            # Si ya está cancelada, retornamos éxito inmediatamente
+            if current_status_id == 'c842035f-aecb-5099':
+                return 200, "La reservación ya se encuentra cancelada.", [existing_reservation]
+
             allowed_statuses = [
                 '6d0fa47f-1933-5928',  # ID de pendiente
 
