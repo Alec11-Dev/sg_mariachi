@@ -1,6 +1,9 @@
 import mysql.connector
 from mysql.connector import Error
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
 class Conexion:
     """
@@ -15,10 +18,11 @@ class Conexion:
         self.cursor = None
         try:
             self.conn = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="",  # Agrega la contraseña si es necesaria
-                database="bd_mariachi",
+                host=os.getenv("MYSQLHOST", "localhost"),
+                user=os.getenv("MYSQLUSER", "root"),
+                password=os.getenv("MYSQLPASSWORD", ""),
+                database=os.getenv("MYSQLDATABASE", "bd_mariachi"),
+                port=int(os.getenv("MYSQLPORT", 3306)),
                 charset='utf8mb4',  # Mejor soporte para caracteres especiales
                 collation='utf8mb4_unicode_ci'
             )
