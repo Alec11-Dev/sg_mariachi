@@ -63,8 +63,8 @@ app.register_blueprint(fact_revenues_route)
 app.register_blueprint(auth_route)
 
 
-#frontend_urls = os.environ.get("URL_FRONTEND", "http://localhost:5173")
-frontend_urls = "http://localhost:5173,http://localhost:5173"
+frontend_urls = os.environ.get("URL_FRONTEND", "http://localhost:5173")
+#frontend_urls = "http://localhost:5173,http://localhost:5173"
 # Convertir a lista si hay múltiples URLs separadas por coma
 origins_list = [url.strip() for url in frontend_urls.split(",")]
 
