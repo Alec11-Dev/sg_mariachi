@@ -6,7 +6,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        // Agregamos todas las páginas que necesitas
         login: resolve(__dirname, 'pages/login.html'),
         control_panel: resolve(__dirname, 'pages/control_panel.html'),
         'registro-evento': resolve(__dirname, 'pages/registro-evento.html'),
@@ -14,5 +13,9 @@ export default defineConfig({
         generate_reports: resolve(__dirname, 'pages/generate_reports.html'),
       },
     },
+  },
+  // SECCIÓN AGREGADA PARA PERMITIR HOSTS ESPECÍFICOS EN MODO PREVIEW DE VITE:
+  preview: {
+    allowedHosts: ['carefree-harmony-production-c19e.up.railway.app'],
   },
 });
