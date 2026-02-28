@@ -46,9 +46,14 @@ app.secret_key = os.environ.get('SECRET_KEY') or 'clave_super_secreta_para_desar
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
 
 # --- CONFIGURACIÓN DE COOKIES ---
-# Lax permite enviar cookies en navegacion normal y AJAX del mismo sitio (localhost a localhost)
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = False # False porque estamos en HTTP (no HTTPS)
+if os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('URL_FRONTEND'):
+    # Si estamos en Railway, asumimos que el frontend y backend están en dominios diferentes (deploy separados)
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Permitir cookies entre sitios
+    app.config['SESSION_COOKIE_SECURE'] = True  # Solo enviar cookies por HTTPS
+else:
+    # En desarrollo local, podemos usar la configuración más permisiva
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Permitir cookies en el mismo sitio y en algunos casos entre sitios
+    app.config['SESSION_COOKIE_SECURE'] = False  # Permitir cookies por HTTP para desarrollo
 
 # 3. HACER LA SESIÓN PERMANENTE: Para que se respete el tiempo de vida de arriba.
 @app.before_request

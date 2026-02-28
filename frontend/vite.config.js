@@ -2,6 +2,7 @@ import { resolve } from 'path';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  base:'/', //Asegura que las rutas sean relativas al dominio raíz
   build: {
     rollupOptions: {
       input: {
@@ -16,6 +17,6 @@ export default defineConfig({
   },
   // SECCIÓN AGREGADA PARA PERMITIR HOSTS ESPECÍFICOS EN MODO PREVIEW DE VITE:
   preview: {
-    allowedHosts: ['carefree-harmony-production-c19e.up.railway.app'],
+    allowedHosts: ['https://sg-mariachi.vercel.app'],
   },
 });
