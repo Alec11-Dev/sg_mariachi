@@ -4,15 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agenda</title>
-  <!-- FullCalendar -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
-  <!-- VISTA DE AÑO -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/multimonth/index.global.min.css" rel="stylesheet">
 
-  <!-- Google Material Icons -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
-  <!-- Estilos propios EDITAR RUTA-->
   <link rel="stylesheet" href="../src/styles/style_agenda.css">
 
 </head>
@@ -21,69 +17,67 @@
 
   <main class="content">
 
-  <!-- Header -->
-  <header class="header">
-    <h1>Agenda</h1>
-  </header>
-  
+    <header class="header">
+      <h1>Agenda</h1>
+    </header>
 
-  <!-- Controles -->
-  <div class="controls">
+    <div class="controls">
 
-    <!-- Navegación -->
-    <div class="nav-buttons">
-      <button id="prev" title="Anterior">
-        <span class="material-icons">chevron_left</span>
-      </button>
+      <div class="nav-buttons">
+        <button id="prev" title="Anterior">
+          <span class="material-icons">chevron_left</span>
+        </button>
 
-      <button id="today" title="Hoy">
-        <span class="material-icons">today</span>
-      </button>
+        <button id="today" title="Hoy">
+          <span class="material-icons">today</span>
+        </button>
 
-      <button id="next" title="Siguiente">
-        <span class="material-icons">chevron_right</span>
-      </button>
+        <button id="next" title="Siguiente">
+          <span class="material-icons">chevron_right</span>
+        </button>
+      </div>
+
+      <div class="view-buttons">
+        <button id="day" class="view-btn">
+          <span class="material-icons">view_day</span> Día
+        </button>
+
+        <button id="week" class="view-btn active">
+          <span class="material-icons">view_week</span> Semana
+        </button>
+
+        <button id="month" class="view-btn">
+          <span class="material-icons">calendar_month</span> Mes
+        </button>
+
+        <button id="year" class="view-btn">
+          <span class="material-icons">event</span> Año
+        </button>
+
+        <h2 id="currentDate" class="current-date"></h2>
+      </div>
+
+      <input type="search" placeholder="Buscar evento">
+
     </div>
 
-    <!-- Filtros de vista -->
-    <div class="view-buttons">
-      <button id="day" class="view-btn">
-        <span class="material-icons">view_day</span> Día
-      </button>
+    <div id="calendar"></div>
 
-      <button id="week" class="view-btn active">
-        <span class="material-icons">view_week</span> Semana
-      </button>
-
-      <button id="month" class="view-btn">
-        <span class="material-icons">calendar_month</span> Mes
-      </button>
-
-      <button id="year" class="view-btn">
-        <span class="material-icons">event</span> Año
-      </button>
-
-      <!-- muestra el mes--><h2 id="currentDate" class="current-date"></h2>
+    <div id="detailPanel" class="detail-panel">
+      <div class="panel-header">
+        <h2>Resumen del Día</h2>
+        <button id="closePanel" class="close-btn"><span class="material-icons">close</span></button>
+      </div>
+      <div id="panelContent" class="panel-content">
+        </div>
     </div>
 
-    <!-- Búsqueda (futura) -->
-    <input type="search" placeholder="Buscar evento">
+  </main>
 
-  </div>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/multimonth/index.global.min.js"></script>
 
-  <!-- Calendario -->
-  <div id="calendar"></div>
-
-</main>
-
-<!-- FullCalendar -->
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-<!-- Vita para año -->
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/multimonth/index.global.min.js"></script>
-
-<!-- Lógica propia -->
-<script type="module" src="../src/components/eventos/agenda.js"></script>
+  <script type="module" src="../src/components/eventos/agenda.js"></script>
 
 </body>
 </html>
-
