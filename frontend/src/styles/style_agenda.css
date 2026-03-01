@@ -180,3 +180,136 @@
     font-size: 18px;
   }
 }
+/* =========================================
+   PANEL LATERAL DE DETALLES (MAGIA ANIMADA)
+   ========================================= */
+
+/* Contenedor principal del panel */
+.detail-panel {
+  position: fixed;
+  top: 0;
+  right: -400px; /* Lo escondemos fuera de la pantalla por la derecha */
+  width: 400px;
+  height: 100vh;
+  background-color: #ffffff;
+  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Animación suave al deslizar */
+  z-index: 1000; /* Asegura que flote sobre todo lo demás */
+  display: flex;
+  flex-direction: column;
+}
+
+/* La clase que JS agrega para que el panel entre a la pantalla */
+.detail-panel.open {
+  right: 0;
+}
+
+/* Encabezado del panel */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 25px 30px;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.panel-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* Botón de la X para cerrar */
+.close-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background-color: #fee2e2;
+  color: #ef4444; /* Se pone rojo suave al pasar el mouse */
+}
+
+/* Contenedor donde JS inyecta la información */
+.panel-content {
+  padding: 30px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+/* =========================================
+   ESTILOS DE LA INFORMACIÓN DINÁMICA
+   ========================================= */
+
+/* Cabecera con fecha y texto */
+.date-summary {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.date-icon {
+  font-size: 32px;
+  color: #3346dd;
+  background: rgba(51, 70, 221, 0.1);
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.date-summary h3 {
+  font-size: 16px;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.date-summary p {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Cuadro gris con el total de reservas */
+.stats-box {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.total-icon {
+  font-size: 40px;
+  color: #10b981; /* Un toque verde para denotar ganancia/eventos */
+}
+
+.total-count h4 {
+  font-size: 12px;
+  color: #6b7280;
+  letter-spacing: 1px;
+  margin-bottom: 5px;
+}
+
+.reservations-total {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* Responsive para que en celulares no se vea cortado */
+@media (max-width: 480px) {
+  .detail-panel {
+    width: 100%; 
+    right: -100%;
+  }
+}
